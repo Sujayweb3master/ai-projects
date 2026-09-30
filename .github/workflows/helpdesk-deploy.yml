@@ -1,0 +1,127 @@
+# Deploys helpdesk-app to Azure Container Apps. See helpdesk-app/docs/DEPLOY.md (step 9).
+#
+# Trigger: push a tag named helpdesk-v* (works from the feature branch), or run manually
+# (the "Run workflow" button appears once this file is on the default branch).
+#
+# Auth: GitHub OIDC → Microsoft Entra federated credential. No Azure secrets are stored in
+# GitHub; the vars below are identifiers. App secrets live in Key Vault and are resolved by the
+# Container Apps managed identity, so they never pass through this workflow.
+name: helpdesk-deploy
+
+on:
+  push:
+    tags: ['helpdesk-v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # required for OIDC login
+
+concurrency:
+  group: helpdesk-deploy
+  cancel-in-progress: false # never interrupt a deploy (or a migration) half-way
+
+jobs:
+  deploy:
+    name: Build, migrate, deploy
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 40
+    env:
+      RG: ${{ vars.AZURE_RESOURCE_GROUP }}
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Prepare Azure CLI
+        run: |
+          az config set extension.use_dynamic_install=yes_without_prompt --only-show-errors
+          az extension add --name containerapp --upgrade --yes --only-show-errors
+
+      - name: Resolve container registry
+        id: acr
+        run: |
+          ACR_NAME=$(az acr list -g "$RG" --query "[0].name" -o tsv)
+          if [ -z "$ACR_NAME" ]; then
+            echo "::error::No container registry found in resource group '$RG'. Run DEPLOY.md steps 3-8 first."
+            exit 1
+          fi
+          echo "name=$ACR_NAME" >> "$GITHUB_OUTPUT"
+          echo "server=$(az acr show -n "$ACR_NAME" --query loginServer -o tsv)" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to the registry
+        run: az acr login --name "${{ steps.acr.outputs.name }}"
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v7
+        with:
+          context: helpdesk-app/backend
+          push: true
+          tags: ${{ steps.acr.outputs.server }}/helpdesk-api:${{ env.IMAGE_TAG }}
+          cache-from: type=gha,scope=helpdesk-api
+          cache-to: type=gha,mode=max,scope=helpdesk-api
+
+      - name: Build and push web image
+        uses: docker/build-push-action@v7
+        with:
+          context: helpdesk-app/frontend
+          push: true
+          tags: ${{ steps.acr.outputs.server }}/helpdesk-web:${{ env.IMAGE_TAG }}
+          cache-from: type=gha,scope=helpdesk-web
+          cache-to: type=gha,mode=max,scope=helpdesk-web
+
+      - name: Point the migration job at the new image (API and web untouched)
+        run: |
+          az deployment group create -g "$RG" -n "apps-migrate-${{ github.run_number }}" \
+            -f helpdesk-app/infra/apps.bicep \
+            -p imageTag="$IMAGE_TAG" deployServices=false -o none
+
+      - name: Run database migrations (deploy stops here if they fail)
+        run: |
+          EXECUTION=$(az containerapp job start -g "$RG" -n helpdesk-migrate --query name -o tsv)
+          echo "Started migration execution: $EXECUTION"
+          for attempt in $(seq 1 60); do
+            STATUS=$(az containerapp job execution show -g "$RG" -n helpdesk-migrate \
+              --job-execution-name "$EXECUTION" --query properties.status -o tsv)
+            echo "[$attempt] status: $STATUS"
+            case "$STATUS" in
+              Succeeded) exit 0 ;;
+              Failed|Stopped|Degraded)
+                echo "::error::Migration $STATUS. API and web were NOT updated. See DEPLOY.md troubleshooting for how to read the job logs."
+                exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "::error::Migration did not finish within 10 minutes."
+          exit 1
+
+      - name: Deploy API and web
+        id: apps
+        run: |
+          WEB_URL=$(az deployment group create -g "$RG" -n "apps-${{ github.run_number }}" \
+            -f helpdesk-app/infra/apps.bicep \
+            -p imageTag="$IMAGE_TAG" deployServices=true \
+            --query properties.outputs.webUrl.value -o tsv)
+          echo "url=$WEB_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke test through the public origin
+        env:
+          WEB_URL: ${{ steps.apps.outputs.url }}
+        run: |
+          # Apps scale from zero, so allow time for the first replica to start.
+          curl --fail --silent --show-error --retry 12 --retry-delay 10 --retry-all-errors "$WEB_URL/healthz"; echo
+          curl --fail --silent --show-error --retry 12 --retry-delay 10 --retry-all-errors "$WEB_URL/api/v1/readyz"; echo
+          {
+            echo "### Deployed \`${IMAGE_TAG::7}\`"
+            echo ""
+            echo "App: $WEB_URL"
+          } >> "$GITHUB_STEP_SUMMARY"
