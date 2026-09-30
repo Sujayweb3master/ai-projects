@@ -1,0 +1,19 @@
+{
+  "name": "helpdesk-app",
+  "private": true,
+  "description": "Workspace tooling (formatting, git hooks) for the helpdesk app. Application code lives in backend/ and frontend/.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "prepare": "cd .. && husky helpdesk-app/.husky || true",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.9.8"
+  }
+}

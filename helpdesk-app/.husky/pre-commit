@@ -1,0 +1,3 @@
+# Only touches staged files inside helpdesk-app/ (lint-staged runs from this folder).
+cd helpdesk-app || exit 0
+npx --no-install lint-staged
