@@ -97,7 +97,8 @@
   --color-text-muted: var(--palette-slate-600);
   --color-text-inverse: var(--palette-white);
   --color-border: var(--palette-slate-200);
-  --color-border-strong: var(--palette-slate-400);
+  /* Control boundaries: slate-500 = 4.76:1 on white (WCAG 1.4.11 needs 3:1; slate-400 was 2.56). */
+  --color-border-strong: var(--palette-slate-500);
   --color-action-primary: var(--palette-indigo-600);
   --color-action-primary-hover: var(--palette-indigo-700);
   --color-action-primary-text: var(--palette-white);

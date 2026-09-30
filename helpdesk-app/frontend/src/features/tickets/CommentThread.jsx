@@ -20,6 +20,7 @@ export function CommentThread({ ticket, user }) {
   });
   const [draft, setDraft] = useState('');
   const [error, setError] = useState(null);
+  const [announcement, setAnnouncement] = useState('');
 
   const submit = (event) => {
     event.preventDefault();
@@ -28,9 +29,12 @@ export function CommentThread({ ticket, user }) {
       return;
     }
     setError(null);
+    setAnnouncement('');
     const body = draft;
     setDraft('');
     addComment.mutate(body, {
+      // Screen readers get told the comment landed (WCAG 4.1.3 status messages).
+      onSuccess: () => setAnnouncement('Comment posted'),
       onError: (err) => {
         setDraft(body); // keep the user's words if posting failed
         setError(messageForError(err));
@@ -101,6 +105,9 @@ export function CommentThread({ ticket, user }) {
           >
             Post comment
           </Button>
+          <p className="visually-hidden" role="status">
+            {announcement}
+          </p>
         </form>
       ) : (
         <p className={styles.muted}>{copy.tickets.commentClosed}</p>

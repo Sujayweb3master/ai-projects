@@ -45,3 +45,30 @@ describe('NewTicketPage', () => {
     ).toBeInTheDocument();
   });
 });
+
+describe('CommentThread', () => {
+  it('announces a posted comment to screen readers and clears the draft', async () => {
+    const { signIn: signInAs, renderApp: render } = await import('../../test/render.jsx');
+    signInAs('alice');
+    const { user } = render('/tickets/10000000-0000-4000-8000-000000000001');
+    const { server } = await import('../../test/msw/server.js');
+    const { http, HttpResponse } = await import('msw');
+    server.use(
+      http.post('/api/v1/tickets/:id/comments', async ({ request }) =>
+        HttpResponse.json(
+          {
+            id: 'c1',
+            body: (await request.json()).body,
+            author: { id: 'a', name: 'Alice Johnson', role: 'USER' },
+            createdAt: new Date().toISOString(),
+          },
+          { status: 201 },
+        ),
+      ),
+    );
+    await user.type(await screen.findByLabelText('Add a comment'), 'Still broken');
+    await user.click(screen.getByRole('button', { name: 'Post comment' }));
+    expect(await screen.findByText('Comment posted')).toBeInTheDocument();
+    expect(screen.getByLabelText('Add a comment')).toHaveValue('');
+  });
+});
