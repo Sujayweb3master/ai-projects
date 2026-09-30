@@ -36,11 +36,11 @@ export function TicketTable({ tickets, showCreator, busy, loading }) {
             ? Array.from({ length: 5 }, (_, i) => (
                 <tr key={i}>
                   <td className={styles.titleCell}>
-                    <Skeleton width="70%" />
+                    <Skeleton size="lg" />
                   </td>
                   {Array.from({ length: showCreator ? 5 : 4 }, (__, j) => (
                     <td key={j}>
-                      <Skeleton width="5rem" />
+                      <Skeleton size="sm" />
                     </td>
                   ))}
                 </tr>

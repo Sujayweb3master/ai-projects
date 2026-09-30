@@ -108,6 +108,9 @@
 .nowrap {
   white-space: nowrap;
 }
+.noticeWrap {
+  margin-bottom: var(--space-6);
+}
 .detail {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 20rem;
@@ -222,6 +225,9 @@
   gap: var(--space-2);
 }
 @media (max-width: 56rem) {
+  .noticeWrap {
+    margin-bottom: var(--space-6);
+  }
   .detail {
     grid-template-columns: 1fr;
   }

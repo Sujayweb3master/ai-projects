@@ -44,8 +44,9 @@ export function Loading({ label = 'Loading…', delay = 300 }) {
   );
 }
 
-export function Skeleton({ width = '100%' }) {
-  return <span className={styles.skeleton} style={{ width }} aria-hidden="true" />;
+/** Placeholder bar. Widths are classes (no inline styles, so the CSP can forbid them). */
+export function Skeleton({ size = 'full' }) {
+  return <span className={`${styles.skeleton} ${styles[`skeleton-${size}`]}`} aria-hidden="true" />;
 }
 
 /**

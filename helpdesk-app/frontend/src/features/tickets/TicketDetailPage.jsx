@@ -60,7 +60,7 @@ export function TicketDetailPage() {
         }
       />
       {location.state?.created && (
-        <div style={{ marginBottom: 'var(--space-6)' }}>
+        <div className={styles.noticeWrap}>
           <Notice>{copy.tickets.created}</Notice>
         </div>
       )}

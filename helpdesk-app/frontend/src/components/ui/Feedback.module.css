@@ -67,6 +67,15 @@
   background-size: 200% 100%;
   animation: shimmer 1.2s ease-in-out infinite;
 }
+.skeleton-full {
+  width: 100%;
+}
+.skeleton-lg {
+  width: 70%;
+}
+.skeleton-sm {
+  width: 5rem;
+}
 @keyframes shimmer {
   from {
     background-position: 200% 0;
