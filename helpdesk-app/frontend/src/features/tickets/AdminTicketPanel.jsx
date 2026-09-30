@@ -5,7 +5,6 @@ import { Select } from '../../components/ui/Field.jsx';
 import { copy, messageForError } from '../../domain/copy.js';
 import { STATUS_LABELS } from '../../domain/labels.js';
 import { allowedNextStatuses } from '../../domain/ticketStatus.js';
-import { toast } from '../../stores/toastStore.js';
 import { useAssignableAdmins, useChangeAssignee, useChangeStatus } from './hooks.js';
 import styles from './Tickets.module.css';
 
@@ -20,7 +19,7 @@ function InlineFeedback({ mutation, successText }) {
   }
   return (
     <p className={styles.inlineStatus} role="status">
-      {mutation.isPending ? 'Saving…' : mutation.isSuccess ? successText : ''}
+      {mutation.isPending ? 'Saving…' : mutation.isSuccess ? `✓ ${successText}` : ''}
     </p>
   );
 }
@@ -39,10 +38,8 @@ function StatusControl({ ticket }) {
 
   const apply = (status) =>
     mutation.mutate(status, {
-      onSuccess: () => {
-        setConfirming(false);
-        toast(`Status changed to ${STATUS_LABELS[status]}`);
-      },
+      // Inline feedback next to the control is enough; no duplicate toast.
+      onSuccess: () => setConfirming(false),
       onError: () => setConfirming(false),
     });
 
@@ -114,10 +111,11 @@ function AssigneeControl({ ticket, currentUser }) {
     setChoice(current);
   }
 
-  const assign = (assigneeId, label) =>
-    mutation.mutate(assigneeId, {
-      onSuccess: () => toast(assigneeId ? `Assigned to ${label}` : 'Ticket unassigned'),
-    });
+  const [savedText, setSavedText] = useState('Assignee saved');
+  const assign = (assigneeId, label) => {
+    setSavedText(assigneeId ? `Assigned to ${label}` : 'Ticket unassigned');
+    mutation.mutate(assigneeId);
+  };
   const nameOf = (id) => admins.data?.data.find((u) => u.id === id)?.name ?? 'admin';
 
   return (
@@ -163,7 +161,7 @@ function AssigneeControl({ ticket, currentUser }) {
           </Button>
         )}
       </div>
-      <InlineFeedback mutation={mutation} successText="Assignee saved" />
+      <InlineFeedback mutation={mutation} successText={savedText} />
     </form>
   );
 }

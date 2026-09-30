@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { Button, ButtonLink } from '../../components/ui/Button.jsx';
 import { EmptyState, ErrorState } from '../../components/ui/Feedback.jsx';
@@ -42,6 +42,13 @@ export function TicketListPage() {
   }, [needsAdminDefault, setSearchParams]);
 
   const query = useTicketList(toApiQuery(params));
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersId = useId();
+  const activeFilterCount =
+    params.status.length +
+    params.priority.length +
+    (params.q ? 1 : 0) +
+    (params.assigneeId ? 1 : 0);
   const showSkeleton = useDelayedFlag(query.isPending);
 
   /** Any filter change resets to page 1. */
@@ -112,7 +119,7 @@ export function TicketListPage() {
         }
       />
       <Card aria-label="Ticket list">
-        <div className={styles.toolbar}>
+        <div className={`${styles.toolbar} ${filtersOpen ? '' : styles.filtersCollapsed}`}>
           {presets.length > 0 && (
             <div className={styles.presets} role="group" aria-label="Quick views">
               <span className={styles.presetsLabel} aria-hidden="true">
@@ -131,7 +138,16 @@ export function TicketListPage() {
               ))}
             </div>
           )}
-          <TicketFilters params={params} onChange={update} />
+          <Button
+            className={styles.filtersToggle}
+            aria-expanded={filtersOpen}
+            aria-controls={filtersId}
+            onClick={() => setFiltersOpen((open) => !open)}
+          >
+            {filtersOpen ? 'Hide filters' : 'Show filters'}
+            {activeFilterCount > 0 && ` (${activeFilterCount} active)`}
+          </Button>
+          <TicketFilters id={filtersId} params={params} onChange={update} />
         </div>
         <div className={styles.resultsBar}>
           <span role="status" aria-live="polite" className="tabular">

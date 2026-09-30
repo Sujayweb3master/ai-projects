@@ -14,7 +14,7 @@ export function ConfirmDialog({
   body,
   confirmLabel,
   cancelLabel = 'Cancel',
-  tone = 'danger',
+  tone = 'dangerSolid',
   pending = false,
   onConfirm,
   onCancel,

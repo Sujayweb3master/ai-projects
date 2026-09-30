@@ -16,7 +16,7 @@ function useDebouncedCallback(value, delay, callback) {
   }, [value, delay]);
 }
 
-export function TicketFilters({ params, onChange }) {
+export function TicketFilters({ id, params, onChange }) {
   const [search, setSearch] = useState(params.q);
   // Keep the box in sync when the URL changes elsewhere (presets, Clear filters, back button).
   const [lastQ, setLastQ] = useState(params.q);
@@ -29,7 +29,7 @@ export function TicketFilters({ params, onChange }) {
   });
 
   return (
-    <div className={styles.filters}>
+    <div id={id} className={styles.filters}>
       <TextField
         label="Search titles"
         type="search"

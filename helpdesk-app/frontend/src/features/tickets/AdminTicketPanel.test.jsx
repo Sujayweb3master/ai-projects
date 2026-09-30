@@ -35,7 +35,7 @@ describe('AdminTicketPanel', () => {
     const { user } = renderApp(openTicket('OPEN'));
     await user.selectOptions(await screen.findByLabelText('Move to'), 'IN_PROGRESS');
     await user.click(screen.getByRole('button', { name: 'Update status' }));
-    expect(await screen.findByText('Status updated')).toBeInTheDocument();
+    expect(await screen.findByText('✓ Status updated')).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(db.current.tickets[0].status).toBe('IN_PROGRESS');
   });
@@ -73,7 +73,7 @@ describe('AdminTicketPanel', () => {
     const { user } = renderApp(openTicket('OPEN'));
     await user.click(await screen.findByRole('button', { name: 'Assign to me' }));
     await waitFor(() => expect(db.current.tickets[0].assignee?.id).toBe(ids.admin));
-    expect(await screen.findByText('Assigned to you')).toBeInTheDocument();
+    expect(await screen.findByText('✓ Assigned to you')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Assign to me' })).not.toBeInTheDocument();
   });
 

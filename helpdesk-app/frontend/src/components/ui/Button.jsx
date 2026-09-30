@@ -8,7 +8,7 @@ export function Spinner({ className }) {
 }
 
 /**
- * Button with variants primary | secondary | ghost | danger.
+ * Button with variants primary | secondary | ghost | danger | dangerSolid (dialog confirms).
  * `loading` disables the button (no double submits) and announces the pending label.
  */
 export function Button({

@@ -46,6 +46,12 @@
   --button-border: var(--color-danger-border);
   --button-bg-hover: var(--color-danger-subtle);
 }
+.dangerSolid {
+  --button-bg: var(--palette-rose-700);
+  --button-fg: var(--palette-white);
+  --button-border: var(--palette-rose-700);
+  --button-bg-hover: var(--palette-rose-800);
+}
 .ghost {
   --button-bg: transparent;
   --button-border: transparent;
