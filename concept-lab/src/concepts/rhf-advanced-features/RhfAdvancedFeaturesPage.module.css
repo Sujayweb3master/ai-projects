@@ -1,0 +1,20 @@
+.form { padding: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-panel); }
+.section { padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border); }
+.section:first-child { padding-top: 0; }
+.section:last-of-type { border-bottom: 0; }
+.helper, .preview { color: var(--color-text-muted); }
+.actions, .footerActions { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.actions button, .sectionHeading button, .arrayRow button, .footerActions button:not(:first-child) { padding: 8px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); }
+.snapshot { margin: var(--space-2) 0 0; padding: var(--space-2); overflow-x: auto; border-radius: var(--radius-sm); background: var(--color-surface-muted); font-family: var(--font-mono); font-size: 0.8125rem; }
+.priorityPicker { display: flex; gap: var(--space-1); }
+.priorityButton, .priorityActive { padding: 8px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); }
+.priorityActive { border-color: var(--color-accent); background: var(--color-accent-soft); color: var(--color-accent); font-weight: 700; }
+.checkboxLabel { display: flex; gap: var(--space-1); align-items: center; margin-bottom: var(--space-2); font-weight: 650; }
+.checkboxLabel input { width: auto; }
+.sectionHeading { display: flex; gap: var(--space-2); align-items: center; justify-content: space-between; }
+.sectionHeading h2 { margin-bottom: var(--space-1); }
+.arrayRow { display: flex; gap: var(--space-1); align-items: center; }
+.arrayRow > div { flex: 1; }
+.footerActions { margin-top: var(--space-3); align-items: center; }
+.success { margin-top: var(--space-2); padding: var(--space-2); border-radius: var(--radius-md); background: var(--color-success-soft); color: var(--color-success); }
+@media (max-width: 520px) { .arrayRow { align-items: flex-end; } .arrayRow button { margin-bottom: var(--space-2); } }

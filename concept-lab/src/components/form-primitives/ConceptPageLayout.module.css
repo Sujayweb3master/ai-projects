@@ -1,0 +1,8 @@
+.page { width: min(100%, 800px); margin: 0 auto; }
+.header { margin-bottom: var(--space-4); }
+.description { max-width: 720px; margin-bottom: var(--space-2); color: var(--color-text-muted); font-size: 1.0625rem; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tagLabel { margin-right: var(--space-1); color: var(--color-text-muted); font-size: 0.8125rem; font-weight: 700; }
+.tag { padding: 3px 6px; border-radius: var(--radius-sm); background: var(--color-surface-muted); color: var(--color-text); font-family: var(--font-mono); font-size: 0.8125rem; }
+.notes { margin-top: var(--space-3); padding: var(--space-2); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-muted); }
+.notes p { margin: var(--space-1) 0 0; color: var(--color-text-muted); }

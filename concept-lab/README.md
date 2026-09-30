@@ -1,16 +1,37 @@
-# React + Vite
+# concept-lab
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A personal frontend learning playground. Each concept is a small, isolated React demo that is easy to run, inspect, and extend.
 
-Currently, two official plugins are available:
+## Run it
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+pnpm install
+pnpm dev
+```
 
-## React Compiler
+Other checks:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+pnpm lint
+pnpm format:check
+pnpm build
+```
 
-## Expanding the ESLint configuration
+## Structure at a glance
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- `src/concepts/` contains one fully isolated folder per learning concept.
+- `src/concepts-registry.js` is the source of truth for every concept’s route and sidebar entry.
+- `src/router.jsx` builds the React Router Data Router routes from that registry.
+- `src/components/` contains only the shared layout and form primitives.
+- `src/styles/` contains global CSS and reusable design tokens.
+- `src/api/client.js` is a small client-side fetch wrapper for a future external-API concept.
+
+## Add a new concept
+
+1. Re-read `AGENT-ORCHESTRATOR.md` and `DESIGN.md` first — don't assume prior context carried over.
+2. Confirm which category the new concept belongs to (or whether a new category is needed).
+3. Create `src/concepts/<new-concept-id>/` with the page component (+ CSS module), following the exact anatomy/state requirements already established.
+4. Add one entry to `concepts-registry.js`.
+5. Re-use existing shared primitives from `src/components/form-primitives/` wherever they fit; only add a new shared primitive if the need is genuinely app-wide, not concept-specific.
+6. Re-check against §7 (complexity ceiling) and §10 (definition of done) before considering it finished.
+7. Do not refactor unrelated existing concepts as a side effect unless explicitly asked.
