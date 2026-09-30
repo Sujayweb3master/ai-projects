@@ -41,6 +41,9 @@ export function createApp({
     pinoHttp({
       logger,
       genReqId: (req) => /** @type {any} */ (req).id,
+      // The client IP as Express resolves it (honours TRUST_PROXY_HOPS). Logged so a deployment
+      // can confirm the proxy-hop setting sees the real client (docs/DEPLOY.md, verification).
+      customProps: (req) => ({ clientIp: /** @type {any} */ (req).ip }),
       customLogLevel: (_req, res, err) =>
         err || res.statusCode >= 500 ? 'error' : res.statusCode >= 400 ? 'warn' : 'info',
       autoLogging: { ignore: (req) => req.url === '/healthz' || req.url === '/readyz' },
