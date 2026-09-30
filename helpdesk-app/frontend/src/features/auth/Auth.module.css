@@ -1,0 +1,21 @@
+.form {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-6);
+}
+.header {
+  display: grid;
+  gap: var(--space-1);
+  text-align: center;
+}
+.subtitle {
+  color: var(--color-text-muted);
+}
+.submit {
+  width: 100%;
+  margin-top: var(--space-2);
+}
+.switch {
+  text-align: center;
+  color: var(--color-text-muted);
+}
