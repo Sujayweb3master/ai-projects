@@ -1,6 +1,6 @@
 # Local development stack. Copy .env.example to .env first.
 #   docker compose up --build
-# The API is exposed on http://localhost:3000; the web app is added in Phase 3.
+# Open http://localhost:8080 — nginx serves the SPA and proxies /api to the API (same origin).
 name: helpdesk
 
 services:
@@ -41,13 +41,40 @@ services:
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set in .env}
       ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-15m}
       REFRESH_TOKEN_TTL_DAYS: ${REFRESH_TOKEN_TTL_DAYS:-7}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+      # Browsers send Origin http://localhost:8080 (the web container) on refresh/logout.
+      CORS_ORIGINS: http://localhost:8080
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
-    ports:
-      - '127.0.0.1:3000:3000'
+      # nginx (web) sits in front of the API.
+      TRUST_PROXY_HOPS: 1
+    # Not published to the host: the API is reached through the web container only,
+    # mirroring the internal-only ingress used on Azure.
+    expose:
+      - '3000'
     depends_on:
       migrate:
         condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/readyz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  web:
+    build: ./frontend
+    environment:
+      API_UPSTREAM: http://api:3000
+    ports:
+      - '127.0.0.1:8080:8080'
+    depends_on:
+      api:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
