@@ -7,7 +7,7 @@ Every status and assignee change is recorded in an audit trail.
 |---|---|---|
 | `backend/` | Node.js 24 LTS, Express 5, Zod, Drizzle ORM, PostgreSQL 16 | ✅ Phase 2 |
 | `frontend/` | React 19 (Vite), React Router 7, TanStack Query, Zustand, React Hook Form + Zod, served by nginx | ✅ Phase 3 |
-| `infra/` | Azure Bicep (Container Apps, PostgreSQL Flexible Server, ACR, Key Vault) | ⏳ Phase 4 |
+| `infra/` | Azure Bicep (Container Apps, PostgreSQL Flexible Server, ACR, Key Vault) + OIDC deploy workflow | ✅ Phase 4 (runbook-driven; see [`docs/DEPLOY.md`](docs/DEPLOY.md)) |
 
 The approved design (data model, API contract, phases) is in [`docs/PLAN.md`](docs/PLAN.md).
 The accessibility audit is in [`docs/ACCESSIBILITY.md`](docs/ACCESSIBILITY.md).
@@ -60,6 +60,21 @@ docker compose exec -e SEED_ADMIN_PASSWORD=... -e SEED_USER_PASSWORD=... api nod
 
 The `api` container only starts after the `migrate` job exits successfully. The API is not published to
 the host: the browser talks only to the `web` container (nginx), which serves the app and proxies `/api`.
+
+## Deploying to Azure
+
+Follow [`docs/DEPLOY.md`](docs/DEPLOY.md): a numbered Cloud Shell runbook covering preview (what-if), secrets generated into
+Key Vault, GitHub OIDC setup, verification with curl, rollback and teardown. Costs are in
+[`docs/COSTS.md`](docs/COSTS.md) (about $25/month, about $9 for a 10-day trial).
+
+- **Resources:** one resource group, `helpdesk-rg`, containing:
+  - Container Apps: the public nginx web app and an internal-only API
+  - a migration job
+  - PostgreSQL Flexible Server B1ms
+  - Container Registry Basic, Key Vault, Log Analytics
+- **Templates (`infra/`):** `core.bicep` then `database.bicep`, both run by you, then `apps.bicep`, run by the workflow.
+- **Deploys:** push a `helpdesk-v*` tag. `.github/workflows/helpdesk-deploy.yml` logs in with OIDC (no stored Azure secrets),
+  pushes the images, runs migrations as a gated step, then updates the API and web apps.
 
 ## Commands (run in `backend/`)
 

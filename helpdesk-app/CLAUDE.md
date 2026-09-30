@@ -83,6 +83,16 @@ Adapted from the `accessibility-audit` skill's rules file. Audit results are in 
   - Add new screens to `src/test/a11y.test.jsx` (axe).
 - `npm run lint` includes `jsx-a11y`. Don't disable its rules without a written reason next to the disable comment.
 
+## Infrastructure conventions (`infra/`, `.github/workflows/helpdesk-deploy.yml`)
+- Bicep only. Validate with `bicep build <file>` and `bicep lint <file>`; lint the workflow with `actionlint`.
+- **Secrets never go in templates, parameter files or workflow logs.** Secrets are generated in Cloud Shell into Key Vault.
+  Templates read them with `getSecret()` (for the database admin password) or as Container Apps Key Vault references (`keyVaultUrl` plus the managed identity).
+- Resource names are `<prefix>-…` plus a suffix derived from the resource group ID (`take(uniqueString(resourceGroup().id), 5)`).
+  Keep that expression identical in every template, because `apps.bicep` finds the core resources by name.
+- Everything lives in one resource group so teardown is a single `az group delete`. Region comes from `resourceGroup().location`.
+- Migrations run as a Container Apps Job **before** the API or web apps are updated. Keep migrations backward-compatible (add first, remove in a later release).
+- `docs/DEPLOY.md` is the source of truth for operations. Update it whenever the templates or the workflow change.
+
 ## Testing conventions
 - **Backend:** unit tests go in `test/unit`, and HTTP tests against real Postgres go in `test/integration`, using `test/setup/context.js`.
 - **Frontend:** tests sit next to the code (`*.test.jsx`). They render the real route tree with `renderApp()` from
