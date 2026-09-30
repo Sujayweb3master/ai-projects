@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { logout } from '../api/auth.js';
@@ -54,7 +53,6 @@ export function NavBar() {
 function UserMenu() {
   const user = useAuthStore((s) => s.user);
   const clear = useAuthStore((s) => s.clear);
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [pending, setPending] = useState(false);
 
@@ -65,8 +63,7 @@ function UserMenu() {
     } catch {
       // Even if the server call fails, forget the session locally.
     } finally {
-      clear();
-      queryClient.clear();
+      clear(); // Providers drops the query cache when the user changes.
       navigate('/login', { replace: true });
     }
   };
