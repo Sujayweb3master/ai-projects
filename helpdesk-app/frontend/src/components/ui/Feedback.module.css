@@ -44,8 +44,18 @@
   font-weight: var(--weight-semibold);
 }
 .summary ul {
-  margin: var(--space-1) 0 0;
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
   padding-left: var(--space-5);
+}
+/* Error links jump to their field; keep each target at least 24px tall (WCAG 2.5.8). */
+.summary a {
+  display: inline-block;
+  min-height: 1.5rem;
+  line-height: 1.5rem;
+  color: var(--color-danger);
+  font-weight: var(--weight-medium);
 }
 .notice {
   padding: var(--space-3) var(--space-4);

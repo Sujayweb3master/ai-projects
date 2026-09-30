@@ -69,7 +69,19 @@ export function FormErrorSummary({ title = 'There is a problem', message, fieldE
         <ul>
           {entries.map(([name, error]) => (
             <li key={name}>
-              <a href={`#field-${name}`}>{error}</a>
+              <a
+                href={`#field-${name}`}
+                onClick={(event) => {
+                  // Move focus into the field, not just scroll to it.
+                  const field = document.getElementById(`field-${name}`);
+                  if (field) {
+                    event.preventDefault();
+                    field.focus();
+                  }
+                }}
+              >
+                {error}
+              </a>
             </li>
           ))}
         </ul>

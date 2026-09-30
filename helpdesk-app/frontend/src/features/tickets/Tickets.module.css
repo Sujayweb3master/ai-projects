@@ -55,6 +55,9 @@
   color: var(--color-text-muted);
 }
 .tableRegion {
+  /* Positioned so visually-hidden (absolute) labels inside cells stay within the scroll
+     region instead of widening the page at narrow widths (WCAG 1.4.10 reflow). */
+  position: relative;
   overflow-x: auto;
 }
 .table {

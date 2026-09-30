@@ -6,6 +6,9 @@
   border-bottom: 1px solid var(--color-border);
 }
 .tableRegion {
+  /* Positioned so visually-hidden (absolute) labels inside cells stay within the scroll
+     region instead of widening the page at narrow widths (WCAG 1.4.10 reflow). */
+  position: relative;
   overflow-x: auto;
 }
 .table {

@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { copy } from '../../domain/copy.js';
 import { renderApp, signIn } from '../../test/render.jsx';
@@ -13,6 +13,9 @@ describe('NewTicketPage', () => {
     expect(summary).toHaveTextContent(copy.validation.titleLength);
     expect(screen.getByLabelText(/^Title/)).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByLabelText(/^Description/)).toHaveAttribute('aria-invalid', 'true');
+    // Summary links move focus to the field they describe.
+    await user.click(within(summary).getByRole('link', { name: copy.validation.titleLength }));
+    expect(screen.getByLabelText(/^Title/)).toHaveFocus();
   });
 
   it('maps server validation errors onto fields and keeps the input', async () => {
