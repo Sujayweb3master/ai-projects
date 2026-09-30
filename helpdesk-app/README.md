@@ -80,7 +80,7 @@ value is invalid, the process exits and lists every problem. See [`.env.example`
 | `REFRESH_TOKEN_TTL_DAYS` | `7` | Refresh-token lifetime |
 | `CORS_ORIGINS` | *(empty)* | Comma-separated allowlist of browser origins |
 | `COOKIE_SECURE` | `true` | Browsers accept Secure cookies on `http://localhost` |
-| `TRUST_PROXY_HOPS` | `1` | Reverse proxies in front of the API (for correct client IPs) |
+| `TRUST_PROXY_HOPS` | `0` | Reverse proxies in front of the API. Keep 0 unless behind a proxy, or clients can spoof their IP |
 | `LOG_LEVEL`, `PORT`, `DB_POOL_MAX` | `info`, `3000`, `10` | |
 
 ## Architecture

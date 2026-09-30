@@ -21,4 +21,5 @@ has **internal-only ingress**. Locally, the Vite dev server proxies the same way
 ## Consequences
 - ✅ The cookie can be `SameSite=Strict` and CORS is effectively unused (still configured with an allowlist).
 - ✅ The API isn't reachable from the internet at all.
-- ⚠️ nginx is one more hop. `TRUST_PROXY_HOPS` must match so rate limiting sees real client IPs.
+- ⚠️ nginx is one more hop. `TRUST_PROXY_HOPS` (default 0) must be set to the real number of proxies
+  in each environment so rate limiting sees real client IPs without trusting spoofed headers.

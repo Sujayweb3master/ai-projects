@@ -252,7 +252,7 @@ describe('GET /api/v1/auth/me', () => {
 
 describe('rate limiting', () => {
   it('limits login attempts per IP and returns 429 in the standard shape', async () => {
-    const limited = createTestContext({ rateLimits: { credentials: 3 } });
+    const limited = createTestContext({ rateLimits: { login: 3 } });
     try {
       const attempt = () =>
         limited.api().post('/api/v1/auth/login').send({ email: 'x@example.com', password: 'nope' });
@@ -260,6 +260,40 @@ describe('rate limiting', () => {
       const res = await attempt().expect(429);
       expect(res.body.error.code).toBe('RATE_LIMITED');
       expect(res.headers.ratelimit).toBeDefined();
+    } finally {
+      await limited.pool.end();
+    }
+  });
+
+  it('cannot be bypassed by changing path case or adding a trailing slash', async () => {
+    const limited = createTestContext({ rateLimits: { login: 2 } });
+    try {
+      const body = { email: 'x@example.com', password: 'nope' };
+      await limited.api().post('/api/v1/auth/login').send(body).expect(401);
+      await limited.api().post('/api/v1/auth/LOGIN').send(body).expect(401);
+      await limited.api().post('/api/v1/auth/login/').send(body).expect(429);
+      await limited.api().post('/api/v1/auth/Login').send(body).expect(429);
+    } finally {
+      await limited.pool.end();
+    }
+  });
+
+  it('ignores spoofed X-Forwarded-For when no proxy is trusted (default)', async () => {
+    const limited = createTestContext({ rateLimits: { login: 1 } });
+    try {
+      const body = { email: 'x@example.com', password: 'nope' };
+      await limited
+        .api()
+        .post('/api/v1/auth/login')
+        .set('X-Forwarded-For', '1.1.1.1')
+        .send(body)
+        .expect(401);
+      await limited
+        .api()
+        .post('/api/v1/auth/login')
+        .set('X-Forwarded-For', '2.2.2.2')
+        .send(body)
+        .expect(429);
     } finally {
       await limited.pool.end();
     }

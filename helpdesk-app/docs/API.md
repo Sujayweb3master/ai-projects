@@ -146,6 +146,6 @@ TOKEN=$(curl -s -c jar -X POST $API/auth/login -H 'content-type: application/jso
 curl -s "$API/tickets?status=OPEN&sort=-priority" -H "Authorization: Bearer $TOKEN"
 curl -s -X POST $API/tickets -H "Authorization: Bearer $TOKEN" -H 'content-type: application/json' \
   -d '{"title":"Laptop will not boot","description":"Black screen after logo","priority":"HIGH"}'
-# NB: the refresh cookie is Secure; curl sends it over http://localhost only with --cookie jar
+# The refresh cookie is Secure; curl (like browsers) still sends it to http://localhost
 curl -s -b jar -c jar -X POST $API/auth/refresh -H 'X-Requested-With: fetch'
 ```

@@ -12,7 +12,7 @@ import { createAuthService } from './auth.service.js';
  *   env: import('../../config/env.js').Env,
  *   logger?: import('pino').Logger,
  *   authenticate: import('express').RequestHandler,
- *   limiters: { credentials: import('express').RequestHandler, refresh: import('express').RequestHandler },
+ *   limiters: Record<'login' | 'register' | 'refresh', import('express').RequestHandler>,
  * }} deps
  */
 export function authRouter({ db, env, logger, authenticate, limiters }) {
@@ -38,14 +38,14 @@ export function authRouter({ db, env, logger, authenticate, limiters }) {
 
   router.post(
     '/register',
-    limiters.credentials,
+    limiters.register,
     validate({ body: registerBody }),
     async (req, res) => {
       sendSession(res, 201, await auth.register(req.valid.body, meta(req)));
     },
   );
 
-  router.post('/login', limiters.credentials, validate({ body: loginBody }), async (req, res) => {
+  router.post('/login', limiters.login, validate({ body: loginBody }), async (req, res) => {
     sendSession(res, 200, await auth.login(req.valid.body, meta(req)));
   });
 

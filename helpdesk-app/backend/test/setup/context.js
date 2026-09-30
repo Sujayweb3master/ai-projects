@@ -24,7 +24,7 @@ export function buildEnv(overrides = {}) {
 
 /**
  * One app + pool per test file.
- * @param {{ env?: Record<string, string>, rateLimits?: { credentials?: number, refresh?: number } }} [options]
+ * @param {{ env?: Record<string, string>, rateLimits?: { login?: number, register?: number, refresh?: number } }} [options]
  */
 export function createTestContext({ env: envOverrides, rateLimits } = {}) {
   const env = buildEnv(envOverrides);
@@ -36,7 +36,7 @@ export function createTestContext({ env: envOverrides, rateLimits } = {}) {
     env,
     state,
     logger: pino({ level: 'silent' }),
-    rateLimits: { credentials: 1_000, refresh: 1_000, ...rateLimits },
+    rateLimits: { login: 1_000, register: 1_000, refresh: 1_000, ...rateLimits },
   });
   return { app, db, pool, env, state, api: () => request(app) };
 }

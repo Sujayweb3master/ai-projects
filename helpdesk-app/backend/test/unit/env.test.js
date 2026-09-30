@@ -17,6 +17,7 @@ describe('parseEnv', () => {
       COOKIE_SECURE: true,
       DB_SSL: false,
       CORS_ORIGINS: [],
+      TRUST_PROXY_HOPS: 0,
     });
     expect(Object.isFrozen(env)).toBe(true);
   });
@@ -24,6 +25,14 @@ describe('parseEnv', () => {
   it('parses a comma-separated CORS allowlist', () => {
     const env = parseEnv({ ...valid, CORS_ORIGINS: 'https://a.example, https://b.example' });
     expect(env.CORS_ORIGINS).toEqual(['https://a.example', 'https://b.example']);
+  });
+
+  it('normalises origins so trailing slashes and paths still match the Origin header', () => {
+    const env = parseEnv({
+      ...valid,
+      CORS_ORIGINS: 'https://a.example/, http://localhost:5173/app',
+    });
+    expect(env.CORS_ORIGINS).toEqual(['https://a.example', 'http://localhost:5173']);
   });
 
   it('lists every problem at once', () => {

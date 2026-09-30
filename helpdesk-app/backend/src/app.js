@@ -20,7 +20,7 @@ import { usersRouter } from './modules/users/users.routes.js';
  *   env: import('./config/env.js').Env,
  *   logger: import('pino').Logger,
  *   state?: { shuttingDown: boolean },
- *   rateLimits?: { credentials?: number, refresh?: number },
+ *   rateLimits?: { login?: number, register?: number, refresh?: number },
  * }} deps
  */
 export function createApp({
@@ -73,7 +73,8 @@ export function createApp({
 
   const requireAuth = authenticate({ db, secret: env.JWT_ACCESS_SECRET });
   const limiters = {
-    credentials: createLimiter({ limit: rateLimits.credentials ?? 10 }),
+    login: createLimiter({ limit: rateLimits.login ?? 10 }),
+    register: createLimiter({ limit: rateLimits.register ?? 10 }),
     refresh: createLimiter({ limit: rateLimits.refresh ?? 60 }),
   };
 

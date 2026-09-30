@@ -23,9 +23,13 @@ export const envSchema = z.object({
         .map((origin) => origin.trim())
         .filter(Boolean),
     )
-    .pipe(z.array(z.url())),
+    .pipe(z.array(z.url()))
+    // Normalise to scheme://host[:port] so "https://x.example/" still matches the Origin header.
+    .transform((origins) => origins.map((origin) => new URL(origin).origin)),
   COOKIE_SECURE: booleanString.default(true),
-  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(1),
+  // Number of reverse proxies in front of the API. 0 (default) ignores X-Forwarded-For, which
+  // is the only safe choice when clients can reach the API directly.
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
 });
 
 /**

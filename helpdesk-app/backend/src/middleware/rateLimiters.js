@@ -6,6 +6,10 @@ const FIFTEEN_MINUTES = 15 * 60 * 1000;
 /**
  * In-memory limiter (per process). With several replicas each keeps its own counters;
  * see README "Known limitations".
+ *
+ * Each limiter instance has its own store, so the key is the client IP only. Keying on the
+ * request path would let attackers get fresh buckets via /LOGIN or /login/ (Express routing
+ * is case-insensitive and ignores trailing slashes).
  * @param {{ limit: number, windowMs?: number }} options
  */
 export const createLimiter = ({ limit, windowMs = FIFTEEN_MINUTES }) =>
@@ -14,8 +18,7 @@ export const createLimiter = ({ limit, windowMs = FIFTEEN_MINUTES }) =>
     limit,
     standardHeaders: 'draft-8',
     legacyHeaders: false,
-    // Key on client IP + route so login attempts don't eat into the refresh budget.
-    keyGenerator: (req) => `${ipKeyGenerator(req.ip ?? '')}:${req.baseUrl}${req.path}`,
+    keyGenerator: (req) => ipKeyGenerator(req.ip ?? ''),
     handler: (_req, _res, next) =>
       next(new AppError(429, 'RATE_LIMITED', 'Too many requests, please try again later')),
   });
