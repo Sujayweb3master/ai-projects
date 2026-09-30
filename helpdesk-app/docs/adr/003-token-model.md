@@ -19,6 +19,8 @@ httpOnly cookie, and only hashed refresh tokens in the DB.
 ## Consequences
 - ✅ A stolen refresh token has a short useful life, and replaying it logs out the attacker *and* the victim.
 - ✅ A DB leak doesn't expose usable refresh tokens.
-- ⚠️ Two browser tabs refreshing at the same moment can trigger reuse detection. The SPA must serialise
-  refreshes (single-flight), which is planned in Phase 3.
+- ⚠️ Two browser tabs refreshing at the same moment could trigger reuse detection. **Resolved in Phase 3:**
+  inside a tab, concurrent 401s share one refresh promise; across tabs, refreshes are serialised with the Web
+  Locks API (`navigator.locks.request('helpdesk-token-refresh')`), so a waiting tab sends the already-rotated
+  cookie. Browsers without Web Locks fall back to per-tab single-flight.
 - ⚠️ HS256 means one shared secret. Rotating it logs everyone out.

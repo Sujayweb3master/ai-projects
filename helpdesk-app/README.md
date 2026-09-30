@@ -6,10 +6,11 @@ Every status and assignee change is recorded in an audit trail.
 | Part | Stack | Status |
 |---|---|---|
 | `backend/` | Node.js 24 LTS, Express 5, Zod, Drizzle ORM, PostgreSQL 16 | ✅ Phase 2 |
-| `frontend/` | React (Vite), React Router, TanStack Query, Zustand, RHF + Zod | ⏳ Phase 3 |
+| `frontend/` | React 19 (Vite), React Router 7, TanStack Query, Zustand, React Hook Form + Zod, served by nginx | ✅ Phase 3 |
 | `infra/` | Azure Bicep (Container Apps, PostgreSQL Flexible Server, ACR, Key Vault) | ⏳ Phase 4 |
 
 The approved design (data model, API contract, phases) is in [`docs/PLAN.md`](docs/PLAN.md).
+The accessibility audit is in [`docs/ACCESSIBILITY.md`](docs/ACCESSIBILITY.md).
 The full endpoint reference is in [`docs/API.md`](docs/API.md), and the decision records are in [`docs/adr/`](docs/adr/).
 
 ---
@@ -30,8 +31,15 @@ cd backend
 npm install
 npm run db:migrate              # apply SQL migrations
 npm run db:seed                 # 1 admin + 3 users + 12 tickets (dev only)
-npm run dev                     # http://localhost:3000  (auto-restarts on change)
+npm run dev                     # API on http://localhost:3000  (auto-restarts on change)
+
+# in a second terminal
+cd helpdesk-app/frontend
+npm install
+npm run dev                     # http://localhost:5173 (Vite proxies /api to :3000)
 ```
+
+Sign in with `admin@example.com` or `alice@example.com` and the seed passwords you set in `.env`.
 
 Try it:
 
@@ -46,10 +54,12 @@ curl -X POST localhost:3000/api/v1/auth/login -H 'content-type: application/json
 ```bash
 cd helpdesk-app
 cp .env.example .env            # set POSTGRES_PASSWORD and JWT_ACCESS_SECRET at minimum
-docker compose up --build       # db → migrate (one-shot) → api on http://localhost:3000
+docker compose up --build       # db → migrate (one-shot) → api → web on http://localhost:8080
+docker compose exec -e SEED_ADMIN_PASSWORD=... -e SEED_USER_PASSWORD=... api node src/db/seed.js  # optional sample data
 ```
 
-The `api` container only starts after the `migrate` job exits successfully.
+The `api` container only starts after the `migrate` job exits successfully. The API is not published to
+the host: the browser talks only to the `web` container (nginx), which serves the app and proxies `/api`.
 
 ## Commands (run in `backend/`)
 
@@ -62,6 +72,9 @@ The `api` container only starts after the `migrate` job exits successfully.
 | `npm run db:generate` | Generate a new SQL migration from `src/db/schema.js` |
 | `npm run db:migrate` | Apply pending migrations (takes a Postgres advisory lock) |
 | `npm run db:seed` | Seed sample data; refuses `NODE_ENV=production` without `--force` |
+
+In `frontend/`: `npm run dev`, `npm test` (Vitest + Testing Library + MSW + axe-core), `npm run lint`
+(includes `jsx-a11y`), `npm run build`.
 
 From `helpdesk-app/`: `npm run format` / `npm run format:check` (Prettier).
 A pre-commit hook (husky + lint-staged) lints and formats staged files under `helpdesk-app/` only.
@@ -116,6 +129,27 @@ Browser ──HTTPS──▶ web (nginx: SPA + reverse proxy /api) ──▶ api
 - Structured pino logs with a request id. Authorization headers, cookies and passwords are redacted.
 - `/healthz` (liveness) and `/readyz` (checks the DB; returns 503 while draining). On SIGTERM the server stops accepting connections, drains, closes the pool and exits.
 
+## Frontend
+
+| Route | Who | What |
+|---|---|---|
+| `/login`, `/register` | public | Sign in / sign up (autocomplete hints, show-password toggle, focused error summary) |
+| `/tickets` | all | List with status/priority/title filters and sort, all kept in the URL; admins get quick views (Unassigned, Assigned to me…) and land on open + in-progress tickets sorted by priority |
+| `/tickets/new`, `/tickets/:id/edit` | owner while OPEN · admin until CLOSED | Shared form; input is kept on server errors |
+| `/tickets/:id` | owner · admin | Details, comments (added instantly, rolled back if the save fails), history timeline; admins get the status control (only valid next statuses; closing asks for confirmation) and an assignee picker with **Assign to me** |
+| `/admin/users` | admin | Search/filter users, change role (with Undo), deactivate (with confirmation) and reactivate |
+
+**How it fits together**
+
+- **Session:**
+  - The access token lives only in memory (Zustand); the refresh token is an httpOnly cookie.
+  - On page load, `AuthBootstrap` calls `/auth/refresh` to restore the session.
+  - `src/api/http.js` retries once after a 401, sharing a single refresh between concurrent requests and serialising refreshes across tabs with the Web Locks API ([ADR-003](docs/adr/003-token-model.md)).
+- **Server state:** TanStack Query. Mutations update the ticket cache and invalidate lists and history.
+- **Design system:** three-tier CSS custom-property tokens (`src/styles/tokens.css`). Dark mode redefines only the semantic tokens, and components never use raw colours.
+- **Copy:** every user-facing message lives in `src/domain/copy.js`, and tests assert those exact strings.
+- **Production:** nginx (unprivileged, port 8080) serves the build with a strict CSP (`script-src 'self'`, no inline styles) and security headers, caches hashed assets immutably, and proxies `/api`.
+
 ## API overview
 
 Base path `/api/v1`. Full reference: [`docs/API.md`](docs/API.md).
@@ -132,7 +166,12 @@ Base path `/api/v1`. Full reference: [`docs/API.md`](docs/API.md).
 
 ## Testing
 
-`backend/test/` holds 135 tests (about 92% statement coverage):
+`frontend/src/**/*.test.*` holds 51 tests. They cover the API client (single-flight refresh, error parsing), the
+login flow, route guards, role-aware navigation, list filters and empty/error states, create-form validation and
+server-error mapping, the admin status/assignee panel, the users page (Undo, confirmation), and axe checks on
+5 screens.
+
+`backend/test/` holds 138 tests (about 92% statement coverage):
 
 - **Unit:** every status-transition pair, env validation, token helpers, pagination.
 - **Integration (Supertest + real PostgreSQL):** auth lifecycle including refresh-token reuse,
@@ -141,6 +180,14 @@ Base path `/api/v1`. Full reference: [`docs/API.md`](docs/API.md).
 
 The test setup drops and re-migrates the test schema on every run. It refuses to run unless the
 database name ends in `_test`.
+
+## Known limitations (frontend)
+
+- The JS bundle is about 156 KB gzipped (React, Router, TanStack Query and Zod in one chunk). Route-level code splitting would cut the first load.
+- Ticket lists don't live-update: they refresh after your own changes and when the tab regains focus (if the data is older than 15 s). There is no polling or push.
+- Users-page filters are kept in component state, not in the URL (ticket filters are in the URL).
+- Accessibility was checked with automated tools and keyboard testing, but not with a real screen reader. See [`docs/ACCESSIBILITY.md`](docs/ACCESSIBILITY.md).
+- English only; no i18n framework.
 
 ## Known limitations (backend)
 
