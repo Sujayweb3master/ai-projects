@@ -1,0 +1,29 @@
+{
+  "skill_name": "api-contract-forge",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Build a new API for notifications. I'm using Express with TypeScript, Zod for validation, and Prisma with PostgreSQL. I need full CRUD.",
+      "expected_output": "Should detect Express+TS+Zod+Prisma stack, ask for fields/permissions, then generate 4 files (types, routes, controller, service) with Swagger JSDoc, validation schemas, pagination on list, and a compliance checklist at the end.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Here's my API response, generate TypeScript types and Zod schemas from it:\n\n{\"statusCode\":200,\"message\":\"Data retrieved\",\"data\":{\"items\":[{\"id\":\"550e8400-e29b-41d4-a716-446655440000\",\"title\":\"Test\",\"amount\":150.5,\"status\":\"draft\",\"tags\":[\"urgent\"],\"assignee\":{\"id\":\"user-1\",\"name\":\"John\",\"email\":\"john@test.com\"},\"createdAt\":\"2025-01-15T10:30:00Z\"}],\"total\":1,\"page\":1,\"limit\":10,\"totalPages\":1}}",
+      "expected_output": "Should detect envelope (ApiResponse), pagination (PaginatedData), extract nested Assignee type, detect UUID format on id, email format on email, ISO datetime on createdAt. Generate TypeScript interfaces and Zod schemas with proper nullable/optional handling.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Compare these two API responses and tell me about breaking changes:\n\nV1: {\"data\":{\"id\":\"1\",\"title\":\"Test\",\"difficulty_level\":\"easy\",\"items\":[{\"name\":\"A\"}]}}\n\nV2: {\"data\":{\"id\":1,\"name\":\"Test\",\"items\":[{\"name\":\"A\",\"count\":5}]}}",
+      "expected_output": "Should detect: BREAKING — 'id' changed from string to number, 'title' renamed to 'name', 'difficulty_level' removed. NON-BREAKING — 'count' added to items (optional new field). Report should clearly separate breaking vs non-breaking.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "I need just a POST endpoint for appointments. I'm on FastAPI with SQLAlchemy.",
+      "expected_output": "Should generate ONLY the create endpoint — no list, no get-by-id, no update, no delete. Should produce Pydantic create schema, a single POST route, and the service create method. Should NOT generate update schemas or query params.",
+      "files": []
+    }
+  ]
+}
